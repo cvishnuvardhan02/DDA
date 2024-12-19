@@ -1,84 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Website with Map</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-    }
-
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      background-color: #f4f4f4;
-    }
-
-    header {
-      background-color: #007BFF;
-      color: white;
-      padding: 1rem;
-      text-align: center;
-      width: 100%;
-    }
-
-    #map {
-      height: 80vh;
-      width: 90%;
-      margin: 1rem auto;
-      border: 2px solid #007BFF;
-      border-radius: 8px;
-    }
-
-    footer {
-      background-color: #333;
-      color: white;
-      text-align: center;
-      padding: 0.5rem;
-      width: 100%;
-      position: fixed;
-      bottom: 0;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flood Prediction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        header {
+            background-color: #0078d7;
+            color: #fff;
+            padding: 20px;
+            width: 100%;
+            text-align: center;
+        }
+        main {
+            max-width: 600px;
+            width: 100%;
+            padding: 20px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            background: #fff;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        #map {
+            height: 400px;
+            width: 100%;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #0078d7;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #005fa3;
+        }
+        .result {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body>
-  <header>
-    <h1>Welcome to My Website</h1>
-    <p>Explore the map below!</p>
-  </header>
+    <header>
+        <h1>Flood Prediction System</h1>
+    </header>
+    <main>
+        <h2>Predict Flood Risk</h2>
+        <button id="locateBtn">Locate Me</button>
+        <div id="map"></div>
+        <div class="result" id="result"></div>
+    </main>
+    <script>
+        const map = L.map('map').setView([20.5937, 78.9629], 5); // Default to India
 
-  <div id="map"></div>
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
 
-  <footer>
-    <p>&copy; 2024 My Website. All rights reserved.</p>
-  </footer>
+        let marker;
 
-  <script>
-    function initMap() {
-      const location = { lat: 40.7128, lng: -74.0060 }; // Example: New York City
+        document.getElementById('locateBtn').addEventListener('click', () => {
+            navigator.geolocation.getCurrentPosition((position) => {
+                const { latitude, longitude } = position.coords;
+                map.setView([latitude, longitude], 13);
 
-      const map = new google.maps.Map(document.getElementById('map'), {
-        zoom: 12,
-        center: location,
-      });
+                if (marker) {
+                    map.removeLayer(marker);
+                }
 
-      new google.maps.Marker({
-        position: location,
-        map: map,
-        title: 'New York City',
-      });
-    }
-  </script>
-  
-  <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap">
-  </script>
+                marker = L.marker([latitude, longitude]).addTo(map)
+                    .bindPopup('Your Location').openPopup();
+
+                fetchFloodRisk(latitude, longitude);
+            }, () => {
+                alert('Unable to retrieve your location');
+            });
+        });
+
+        async function fetchFloodRisk(latitude, longitude) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = 'Fetching prediction...';
+
+            try {
+                // Simulated response for flood risk based on latitude and longitude
+                const simulatedResponse = {
+                    weather: [
+                        { description: latitude > 0 ? "light rain" : "clear sky" } // Simple logic for mock data
+                    ]
+                };
+
+                const floodRisk = simulatedResponse.weather[0].description.includes("rain") ? "High" : "Low";
+                resultDiv.textContent = Flood Risk: ${floodRisk} (Weather: ${simulatedResponse.weather[0].description});
+            } catch (error) {
+                console.error(error);
+                resultDiv.textContent = 'Failed to fetch prediction. Please try again later.';
+            }
+        }
+    </script>
 </body>
 </html>
