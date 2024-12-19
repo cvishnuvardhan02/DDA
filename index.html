@@ -54,6 +54,10 @@
             margin-top: 20px;
             font-weight: bold;
         }
+        .severe { color: red; }
+        .warning { color: orange; }
+        .alert { color: yellow; }
+        .no-warning { color: green; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
@@ -65,8 +69,8 @@
     <main>
         <h2>Predict Flood Risk</h2>
         <button id="locateBtn">Locate Me</button>
-        <div id="map"></div>
-        <div class="result" id="result"></div>
+        <p id="message"></p>        <div id="map"></div>
+        <div class="result" id="result"></div> <!-- No default message here -->
     </main>
     <script>
         const map = L.map('map').setView([20.5937, 78.9629], 5); // Default to India
@@ -78,6 +82,9 @@
         let marker;
 
         document.getElementById('locateBtn').addEventListener('click', () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = '';  // Clear any previous results before fetching new data
+
             navigator.geolocation.getCurrentPosition((position) => {
                 const { latitude, longitude } = position.coords;
                 map.setView([latitude, longitude], 13);
@@ -89,6 +96,7 @@
                 marker = L.marker([latitude, longitude]).addTo(map)
                     .bindPopup('Your Location').openPopup();
 
+                // Fetch flood prediction after confirming the location
                 fetchFloodRisk(latitude, longitude);
             }, () => {
                 alert('Unable to retrieve your location');
@@ -97,23 +105,50 @@
 
         async function fetchFloodRisk(latitude, longitude) {
             const resultDiv = document.getElementById('result');
-            resultDiv.textContent = 'Fetching prediction...';
+            resultDiv.textContent = 'Fetching flood risk...';  // Show message while fetching data
 
             try {
-                // Simulated response for flood risk based on latitude and longitude
-                const simulatedResponse = {
-                    weather: [
-                        { description: latitude > 0 ? "light rain" : "clear sky" } // Simple logic for mock data
-                    ]
-                };
+                // Replace with your actual API endpoint (ensure it's a JSON endpoint)
+                const apiUrl = https://environment.data.gov.uk/flood-monitoring/id/stations/1491TH; // Replace with valid API
 
-                const floodRisk = simulatedResponse.weather[0].description.includes("rain") ? "High" : "Low";
-                resultDiv.textContent = Flood Risk: ${floodRisk} (Weather: ${simulatedResponse.weather[0].description});
+                // Fetch data from the API
+                const response = await fetch(apiUrl);
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch flood data');
+                }
+
+                const data = await response.json();  // Assuming the response is in JSON format
+
+                if (data && data.value) {
+                    const floodStatus = data.value;
+                    let floodMessage = Flood Status: ${floodStatus};
+
+                    // Check the severity of the flood and assign class accordingly
+                    let riskLevelClass = '';
+                    if (floodStatus === 'Severe') {
+                        riskLevelClass = 'severe';
+                    } else if (floodStatus === 'Warning') {
+                        riskLevelClass = 'warning';
+                    } else if (floodStatus === 'Alert') {
+                        riskLevelClass = 'alert';
+                    } else {
+                        riskLevelClass = 'no-warning';
+                    }
+
+                    resultDiv.textContent = floodMessage;
+                    resultDiv.className = result ${riskLevelClass};
+                } else {
+                    resultDiv.textContent = 'No flood data available for your location.';
+                    resultDiv.className = 'result no-warning'; // Default to no-warning style
+                }
             } catch (error) {
                 console.error(error);
-                resultDiv.textContent = 'Failed to fetch prediction. Please try again later.';
+                resultDiv.textContent = 'Failed to fetch flood prediction. Please try again later.';
+                resultDiv.className = 'result no-warning'; // Default to no-warning style
             }
         }
+
     </script>
 </body>
 </html>
